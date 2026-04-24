@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+const API = "https://crypto-dashboard-1-3znc.onrender.com";
 
 function App() {
   const [crypto, setCrypto] = useState([]);
@@ -30,19 +39,24 @@ function App() {
   // FETCH CRYPTO LIST
   useEffect(() => {
     setLoading(true);
-    fetch("http://127.0.0.1:8000/crypto")
+    fetch(`${API}/crypto`)
       .then((res) => res.json())
       .then((data) => {
         setCrypto(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Crypto fetch error:", err);
         setLoading(false);
       });
   }, []);
 
   // FETCH HISTORY
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/history?coin=${coin}`)
+    fetch(`${API}/history?coin=${coin}`)
       .then((res) => res.json())
-      .then((data) => setHistory(data));
+      .then((data) => setHistory(data))
+      .catch((err) => console.error("History fetch error:", err));
   }, [coin]);
 
   // FORMAT DATA
@@ -53,9 +67,10 @@ function App() {
 
   // PREDICTION
   function getPrediction() {
-    fetch(`http://127.0.0.1:8000/predict?coin=${coin}`)
+    fetch(`${API}/predict?coin=${coin}`)
       .then((res) => res.json())
-      .then((data) => setPrediction(data.prediction));
+      .then((data) => setPrediction(data.prediction))
+      .catch((err) => console.error("Prediction error:", err));
   }
 
   const selected = crypto.find((c) => c.coin === coin);
@@ -125,12 +140,14 @@ function App() {
       <div className="bg-gray-900 p-6 rounded-xl shadow-lg mb-8">
         <h2 className="text-xl mb-4">{coin.toUpperCase()} 30 day trend</h2>
 
-        <LineChart width={900} height={300} data={formattedHistory}>
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="price" stroke="#60A5FA" />
-        </LineChart>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={formattedHistory}>
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="price" stroke="#60A5FA" />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
 
       {/* BUTTON */}
