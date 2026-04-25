@@ -16,32 +16,31 @@ COINS = [
 
 def fetch_crypto_data():
     url = "https://api.coingecko.com/api/v3/simple/price"
-    
+
     params = {
         "ids": ",".join(COINS),
         "vs_currencies": "usd",
         "include_24hr_change": "true"
     }
 
-    response = requests.get(url, params=params)
-    data = response.json()
+    res = requests.get(url, params=params)
+    data = res.json()
 
-    rows = []
+    result = []
 
     for coin in COINS:
-        try:
-            rows.append({
+        if coin in data:
+            result.append({
                 "coin": coin,
-                "price": data[coin]["usd"],
-                "change_24h": data[coin]["usd_24h_change"]
+                "price": data[coin].get("usd", 0),
+                "change_24h": data[coin].get("usd_24h_change", 0)
             })
-        except:
-            print(f"Skipping {coin} (no data)")
 
-    return pd.DataFrame(rows)
+    return result
 
 
-def fetch_history(coin="bitcoin"):
+
+def fetch_history(coin):
     url = f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart"
 
     params = {
@@ -49,15 +48,15 @@ def fetch_history(coin="bitcoin"):
         "days": 30
     }
 
-    response = requests.get(url, params=params)
-    data = response.json()
+    res = requests.get(url, params=params)
+    data = res.json()
 
     if "prices" not in data:
-        return pd.DataFrame([])
+        return []
 
     prices = data["prices"]
 
-    df = pd.DataFrame(prices, columns=["timestamp", "price"])
-    df["date"] = pd.to_datetime(df["timestamp"], unit="ms")
-
-    return df
+    return [
+        {"date": p[0], "price": p[1]}
+        for p in prices
+    ]
